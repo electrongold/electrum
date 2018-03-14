@@ -28,11 +28,13 @@
 # Note: The deserialization code originally comes from ABE.
 
 from .util import print_error, profiler
-
+ 
 from .bitcoin import *
 from .address import (PublicKey, Address, Script, ScriptOutput, hash160,
                       UnknownAddress, OpCodes as opcodes)
 import struct
+import traceback
+import sys
 
 #
 # Workalike python implementation of Bitcoin's CDataStream class.
@@ -497,9 +499,17 @@ class Transaction:
         self.locktime = locktime
         return self
 
+
     @classmethod
-    def pay_script(self, output):
-        return output.to_script().hex()
+    def pay_script(self, output_type, addr):
+        if output_type == TYPE_SCRIPT:
+            return addr
+        elif output_type == TYPE_ADDRESS:
+            return addr.to_script().hex()
+        elif output_type == TYPE_PUBKEY:
+            return bitcoin.public_key_to_p2pk_script(addr)
+        else:
+            raise TypeError('Unknown output type')
 
     @classmethod
     def estimate_pubkey_size_from_x_pubkey(cls, x_pubkey):
@@ -611,12 +621,12 @@ class Transaction:
     def BIP_LI01_sort(self):
         # See https://github.com/kristovatlas/rfc/blob/master/bips/bip-li01.mediawiki
         self._inputs.sort(key = lambda i: (i['prevout_hash'], i['prevout_n']))
-        self._outputs.sort(key = lambda o: (o[2], self.pay_script(o[1])))
+        self._outputs.sort(key = lambda o: (o[2], self.pay_script(o[0], o[1])))
 
     def serialize_output(self, output):
         output_type, addr, amount = output
         s = int_to_hex(amount, 8)
-        script = self.pay_script(addr)
+        script = self.pay_script(output_type, addr)
         s += var_int(len(script)//2)
         s += script
         return s

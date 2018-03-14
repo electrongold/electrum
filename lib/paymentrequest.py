@@ -47,8 +47,8 @@ from . import rsakey
 
 from .bitcoin import TYPE_ADDRESS
 
-REQUEST_HEADERS = {'Accept': 'application/bitcoincash-paymentrequest', 'User-Agent': 'Electrum'}
-ACK_HEADERS = {'Content-Type':'application/bitcoincash-payment','Accept':'application/bitcoincash-paymentack','User-Agent':'Electrum'}
+REQUEST_HEADERS = {'Accept': 'application/bitcoincash-paymentrequest', 'User-Agent': 'Electron Cash'}
+ACK_HEADERS = {'Content-Type':'application/bitcoincash-payment','Accept':'application/bitcoincash-paymentack','User-Agent':'Electron Cash'}
 
 ca_path = requests.certs.where()
 ca_list = None
@@ -269,8 +269,8 @@ class PaymentRequest:
         paymnt.merchant_data = pay_det.merchant_data
         paymnt.transactions.append(bfh(raw_tx))
         ref_out = paymnt.refund_to.add()
-        ref_out.script = bfh(transaction.Transaction.pay_script(refund_addr))
-        paymnt.memo = "Paid using Electrum"
+        ref_out.script = util.bfh(transaction.Transaction.pay_script(TYPE_ADDRESS, refund_addr))
+        paymnt.memo = "Paid using Electron Cash"
         pm = paymnt.SerializeToString()
         payurl = urllib.parse.urlparse(pay_det.payment_url)
         try:
@@ -306,7 +306,7 @@ def make_unsigned_request(req):
     if amount is None:
         amount = 0
     memo = req['memo']
-    script = bfh(Transaction.pay_script(addr))
+    script = bfh(Transaction.pay_script(TYPE_ADDRESS,addr))
     outputs = [(script, amount)]
     pd = pb2.PaymentDetails()
     for script, amount in outputs:
