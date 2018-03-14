@@ -35,6 +35,7 @@ import urllib
 
 from .i18n import _
 
+import urllib.request, urllib.parse, urllib.error
 import queue
 
 def inv_dict(d):
